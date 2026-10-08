@@ -149,7 +149,15 @@
       body.innerHTML = `<button id="tSay" class="btn">🔊 Přečíst stranu nahlas</button> <button id="tStop" class="btn">Zastavit čtení</button>
         <p></p><button id="tOrig" class="btn">Ukázat původní stránku (PDF)</button>
         <p class="hint">Původní stránka ukáže stranu tak, jak je v PDF, včetně tabulek a kreseb. Jde jen u PDF nahraných od téhle verze.</p>
+        <p></p><button id="tRename" class="btn">Přejmenovat knížku</button>
         <h4>Čtení</h4><p id="tStats" class="hint"></p>`;
+      $('tRename').onclick = () => {
+        const name = (prompt('Nový název knížky:', b.title) || '').trim();
+        if (!name || name === b.title) return;
+        b.title = name;
+        $('bookTitle').textContent = name;
+        A.putBook(b);
+      };
       $('tSay').onclick = () => speak(pageText(b.pos.page));
       $('tStop').onclick = stopSpeak;
       $('tOrig').onclick = showOrig;

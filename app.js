@@ -352,7 +352,20 @@
       del.onclick = async () => {
         if (confirm(`Smazat knížku „${b.title}"? Zapamatovaná slova zůstanou.`)) { await delBook(b.id); showLibrary(); }
       };
-      li.append(open, del);
+      const ren = document.createElement('button');
+      ren.className = 'btn';
+      ren.textContent = 'Přejmenovat';
+      ren.onclick = async () => {
+        const name = (prompt('Nový název knížky:', b.title) || '').trim();
+        if (!name || name === b.title) return;
+        b.title = name;
+        await putBook(b);
+        drawLibrary();
+      };
+      const side = document.createElement('div');
+      side.className = 'side';
+      side.append(ren, del);
+      li.append(open, side);
       ul.append(li);
     }
   }

@@ -116,6 +116,9 @@ body { background: var(--bg); color: var(--ink); font: 16px/1.4 system-ui, "Sego
 .row.lk b { border-bottom: 2px dotted var(--mark); justify-self: start; }
 .row small { color: var(--muted); text-align: right; }
 
+#books .side { display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+#books .side .btn { padding: 5px 10px; font-size: 14px; }
+
 /* knihovna: obálky, hledání */
 .book { grid-template-columns: 44px 1fr; column-gap: 12px; }
 .book .cover {
