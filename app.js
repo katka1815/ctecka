@@ -228,7 +228,28 @@
       `<label class="chk"><input type="checkbox" data-i="${i}"> <span>${esc(f.name)}<small>${esc(f.path)}</small></span></label>`).join('');
     $('foundAdd').hidden = !list.length;
   }
+  // V androidí aplikaci (apk) jde po povolení projít celé úložiště telefonu naráz.
+  async function scanPhone() {
+    const A = window.Android, st = $('importStatus');
+    if (!A.hasAccess()) {
+      if (!confirm('Aby čtečka našla PDF v telefonu, potřebuje povolení číst soubory. Android ti teď ukáže nastavení, kde ho můžeš zapnout (a kdykoli zase vypnout). Čtečka nemá přístup k internetu, takže nic nikam poslat nemůže.\n\nOtevřít nastavení?')) return;
+      A.askAccess();
+      st.hidden = false;
+      st.textContent = 'Až přístup povolíš, vrať se sem a klepni na „Najít PDF v telefonu" znovu.';
+      return;
+    }
+    st.hidden = false; st.textContent = 'Prohledávám telefon…';
+    await new Promise(r => setTimeout(r, 50));
+    const list = JSON.parse(A.listPdfs());
+    st.hidden = true;
+    showFound(list.map(f => ({
+      name: f.name, path: f.path.replace(/^\/storage\/emulated\/0\//, '').replace(/[^/]*$/, ''),
+      get: async () => new File([await (await fetch('/__file?p=' + encodeURIComponent(f.path))).blob()], f.name),
+    })));
+  }
+
   async function scanFolder() {
+    if (window.Android) return scanPhone();
     if (!confirm('Čtečka projde složku, kterou teď vybereš, a vypíše PDF, která v ní najde. Nahraje jen ta, která zaškrtneš. Nic nikam neposílá, všechno zůstává v tomhle zařízení.\n\nPokračovat?')) return;
     if (window.showDirectoryPicker) {
       let dir;
@@ -513,6 +534,7 @@
   const pdfsOf = list => [...list].filter(x => /\.pdf$/i.test(x.name));
   $('file').onchange = e => { const fs = pdfsOf(e.target.files); e.target.value = ''; if (fs.length) importMany(fs); };
   $('scan').onclick = scanFolder;
+  if (window.Android) $('scan').textContent = 'Najít PDF v telefonu';
   $('dirPick').onchange = e => {
     const fs = pdfsOf(e.target.files);
     e.target.value = '';
@@ -575,7 +597,14 @@
 
   $('openVocab').onclick = () => { show('vocab'); renderVocab(); };
   $('toReader').onclick = () => { show('reader'); renderPage(book.pos.scroll); };
-  $('print').onclick = () => window.print();
+  $('print').onclick = () => window.Android ? window.Android.print('Slovníček') : window.print();
+  // tlačítko Zpět v androidí aplikaci: zavře okénko, pak slovníček, pak knížku; v knihovně aplikaci opustí
+  window.__back = () => {
+    if (!$('popup').hidden) { hidePopup(); return true; }
+    if (!$('vocab').hidden) { $('toReader').click(); return true; }
+    if (!$('reader').hidden) { $('toLibrary').click(); return true; }
+    return false;
+  };
   for (const id of ['fScope', 'fSort', 'fMin', 'fCommon', 'fHideKnown', 'fOnlyTr']) $(id).onchange = renderVocab;
   $('vocabList').addEventListener('change', e => {
     if (e.target.dataset.l === undefined) return;
@@ -594,7 +623,7 @@
     const b = last && (await getBooks()).find(x => x.id === last);
     if (b) openBook(b); else showLibrary();
     // offline: stránku i slovníky si prohlížeč uloží do zařízení (sw.js); anglický slovník rovnou
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(e => console.warn(e));
+    if ('serviceWorker' in navigator && !window.Android) navigator.serviceWorker.register('sw.js').catch(e => console.warn(e));
     setTimeout(() => window.Lang.load('en').catch(() => {}), 3000);
   })();
 })();

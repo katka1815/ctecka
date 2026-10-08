@@ -15,3 +15,12 @@ Otevřít: https://katka1815.github.io/ctecka/
 - čtení PDF: pdf.js (Apache 2.0), viz `vendor/`
 
 Skripty, kterými slovníky vznikly, jsou ve složce `tools/`.
+
+## Instalace
+
+- **Android:** stáhni `Ctecka.apk` z [Releases](https://github.com/katka1815/ctecka/releases/latest) a otevři ho. Aplikace nemá
+  oprávnění k internetu; po povolení umí projít úložiště a najít PDF.
+- **iPhone:** otevři adresu výše v Safari, klepni na Sdílet a „Přidat na plochu".
+- **Počítač:** otevři adresu výše, nebo spusť `Spustit ctecku.bat`.
+
+Zdroják androidího obalu je ve složce `android/` (staví se skriptem `build.sh`).
