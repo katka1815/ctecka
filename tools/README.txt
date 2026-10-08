@@ -9,3 +9,4 @@ norm.py       normalizace slov; musi odpovidat funkci norm() v lang.js.
 entrans.py    stream anglickeho kaikki souboru (kaikki.org-dictionary-English.jsonl): z tabulek prekladu
               u anglickych hesel udela opacny slovnik (cizi slovo -> anglicka slova) pro male jazyky.
 gram.py       cesky popis tvaru slova (pad, cislo, cas...) ze znacek Wikislovniku; assemble.py ho uklada k tvarum (window.FTAGS).
+mkphr.py      anglicke fraze (2-4 slova) z FreeDict eng-ces -> dict/en-phr.js

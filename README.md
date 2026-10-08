@@ -24,3 +24,5 @@ Skripty, kterými slovníky vznikly, jsou ve složce `tools/`.
 - **Počítač:** otevři adresu výše, nebo spusť `Spustit ctecku.bat`.
 
 Zdroják androidího obalu je ve složce `android/` (staví se skriptem `build.sh`).
+
+Podrobný popis, jak je čtečka udělaná, proč, co je ověřené a co se muselo obejít: [docs/DOKUMENTACE.md](docs/DOKUMENTACE.md).
