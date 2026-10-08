@@ -11,10 +11,12 @@
   let dbp = null;
   function db() {
     if (!dbp) dbp = new Promise((res, rej) => {
-      const r = indexedDB.open('ctecka', 1);
+      const r = indexedDB.open('ctecka', 2);
       r.onupgradeneeded = () => {
-        r.result.createObjectStore('books', { keyPath: 'id' });
-        r.result.createObjectStore('kv');
+        const have = r.result.objectStoreNames;
+        if (!have.contains('books')) r.result.createObjectStore('books', { keyPath: 'id' });
+        if (!have.contains('kv')) r.result.createObjectStore('kv');
+        if (!have.contains('files')) r.result.createObjectStore('files');   // původní PDF kvůli zobrazení originálu stránky
       };
       r.onsuccess = () => res(r.result);
       r.onerror = () => rej(r.error);
@@ -32,7 +34,9 @@
   }
   const getBooks = () => tx('books', 'readonly', s => s.getAll());
   const putBook = b => tx('books', 'readwrite', s => s.put(b));
-  const delBook = id => tx('books', 'readwrite', s => s.delete(id));
+  const delBook = id => tx('books', 'readwrite', s => s.delete(id)).then(() => tx('files', 'readwrite', s => s.delete(id)));
+  const fileGet = id => tx('files', 'readonly', s => s.get(id));
+  const fileSet = (id, blob) => tx('files', 'readwrite', s => s.put(blob, id));
   const kvGet = k => tx('kv', 'readonly', s => s.get(k));
   const kvSet = (k, v) => tx('kv', 'readwrite', s => s.put(v, k));
 
@@ -153,6 +157,16 @@
     st.hidden = false;
     st.textContent = 'Načítám ' + file.name + '…';
     try {
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      const base = { id, lang: $('newLang').value, added: Date.now(), opened: 0, pos: { page: 0, scroll: 0 }, counted: [], marks: [], hls: [] };
+      const name = file.name.replace(/\.[a-z0-9]+$/i, '');
+      if (Formats.canImport(file.name)) {
+        const r = await Formats.importFile(file, t => { st.textContent = `Načítám ${file.name}… ${t}`; });
+        if (r.pages.join('').replace(/\s/g, '').length < 20) { st.textContent = 'V tomhle souboru jsem nenašla žádný text.'; return 'sken'; }
+        await putBook({ ...base, title: name, kind: Formats.extOf(file.name), pages: r.pages, imgs: r.imgs, toc: r.toc, cover: r.cover || null });
+        st.hidden = true;
+        return 'ok';
+      }
       const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
       const pages = [], imgs = {};
       for (let i = 1; i <= pdf.numPages; i++) {
@@ -171,11 +185,30 @@
         st.textContent = 'V tomhle PDF není text, jen obrázky stránek (sken). Takové zatím přečíst neumím.';
         return 'sken';
       }
-      const book = {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title: file.name.replace(/\.pdf$/i, ''), lang: $('newLang').value,
-        added: Date.now(), opened: 0, pages, imgs, pos: { page: 0, scroll: 0 }, counted: [],
-      };
-      await putBook(book);
+      // obsah (záložky v PDF) a obálka z první stránky
+      const toc = [];
+      try {
+        const addOutline = async (items, depth) => {
+          for (const it of items || []) {
+            if (toc.length >= 300) return;
+            let dest = it.dest;
+            if (typeof dest === 'string') dest = await pdf.getDestination(dest);
+            if (dest && dest[0]) toc.push({ title: (depth ? '  '.repeat(depth) : '') + it.title.trim(), page: await pdf.getPageIndex(dest[0]) });
+            if (depth < 2) await addOutline(it.items, depth + 1);
+          }
+        };
+        await addOutline(await pdf.getOutline(), 0);
+      } catch (e) { console.warn('obsah PDF', e); }
+      let cover = null;
+      try {
+        const p1 = await pdf.getPage(1), vp = p1.getViewport({ scale: 240 / (p1.view[2] - p1.view[0]) });
+        const cv = document.createElement('canvas');
+        cv.width = Math.ceil(vp.width); cv.height = Math.ceil(vp.height);
+        await p1.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+        cover = await new Promise(res => cv.toBlob(res, 'image/jpeg', 0.8));
+      } catch (e) { console.warn('obálka', e); }
+      await putBook({ ...base, title: name, kind: 'pdf', pages, imgs, toc, cover });
+      try { await fileSet(id, file); } catch (e) { console.warn('původní soubor se neuložil', e); }
       st.hidden = true;
       return 'ok';
     } catch (e) {
@@ -191,7 +224,7 @@
     const n = { ok: 0, sken: 0, chyba: 0, dup: 0 };
     let last = '';
     for (const f of files) {
-      const title = f.name.replace(/\.pdf$/i, '');
+      const title = f.name.replace(/\.[a-z0-9]+$/i, '');
       if (have.has(title)) { n.dup++; continue; }
       const r = await importPdf(f);
       n[r]++;
@@ -211,7 +244,7 @@
   async function walk(dir, path, out, depth) {
     if (depth > 6 || out.length >= 500) return;
     for await (const [name, h] of dir.entries()) {
-      if (h.kind === 'file' && /\.pdf$/i.test(name)) out.push({ name, path, get: () => h.getFile() });
+      if (h.kind === 'file' && Formats.supported(name)) out.push({ name, path, get: () => h.getFile() });
       else if (h.kind === 'directory' && !name.startsWith('.')) {
         try { await walk(h, path + name + '/', out, depth + 1); } catch (e) { /* složka bez přístupu */ }
       }
@@ -222,8 +255,8 @@
     const box = $('found');
     box.hidden = false;
     $('foundInfo').textContent = list.length
-      ? `Našla jsem ${list.length} PDF. Zaškrtni, která chceš nahrát (jazyk: ${byCode[$('newLang').value].name}, jde změnit i při čtení).`
-      : 'V téhle složce žádné PDF není.';
+      ? `Našla jsem ${list.length} knížek (PDF, EPUB, FB2, TXT). Zaškrtni, které chceš nahrát (jazyk: ${byCode[$('newLang').value].name}, jde změnit i při čtení).`
+      : 'Žádnou knížku (PDF, EPUB, FB2, TXT) jsem tu nenašla.';
     $('foundList').innerHTML = list.map((f, i) =>
       `<label class="chk"><input type="checkbox" data-i="${i}"> <span>${esc(f.name)}<small>${esc(f.path)}</small></span></label>`).join('');
     $('foundAdd').hidden = !list.length;
@@ -235,7 +268,7 @@
       if (!confirm('Aby čtečka našla PDF v telefonu, potřebuje povolení číst soubory. Android ti teď ukáže nastavení, kde ho můžeš zapnout (a kdykoli zase vypnout). Čtečka nemá přístup k internetu, takže nic nikam poslat nemůže.\n\nOtevřít nastavení?')) return;
       A.askAccess();
       st.hidden = false;
-      st.textContent = 'Až přístup povolíš, vrať se sem a klepni na „Najít PDF v telefonu" znovu.';
+      st.textContent = 'Až přístup povolíš, vrať se sem a klepni na „Najít knížky v telefonu" znovu.';
       return;
     }
     st.hidden = false; st.textContent = 'Prohledávám telefon…';
@@ -269,22 +302,48 @@
     hidePopup();
   }
 
+  let allBooks = [], coverUrls = [];
   async function showLibrary() {
     book = null;
     kvSet('lastBook', null);
     show('library');
-    const books = (await getBooks()).sort((a, b) => (b.opened || b.added) - (a.opened || a.added));
+    allBooks = await getBooks();
+    drawLibrary();
+  }
+
+  function drawLibrary() {
+    const q = $('libSearch').value.trim().toLowerCase(), sort = $('libSort').value;
+    const prog = b => (b.pos.page + (b.pos.scroll || 0)) / Math.max(1, b.pages.length);
+    const books = allBooks.filter(b => !q || b.title.toLowerCase().includes(q)).sort(
+      sort === 'title' ? (a, b) => a.title.localeCompare(b.title, 'cs')
+      : sort === 'added' ? (a, b) => b.added - a.added
+      : sort === 'progress' ? (a, b) => prog(b) - prog(a)
+      : (a, b) => (b.opened || b.added) - (a.opened || a.added));
     const ul = $('books');
     ul.textContent = '';
-    $('empty').hidden = books.length > 0;
+    coverUrls.forEach(u => URL.revokeObjectURL(u));
+    coverUrls = [];
+    $('empty').hidden = allBooks.length > 0;
+    $('libTools').hidden = allBooks.length === 0;
+    // přehled: kolik slov umím a kolik jsem toho přečetla
+    const ws = Object.values(words);
+    const pagesRead = allBooks.reduce((n, b) => n + (b.counted || []).filter(Boolean).length, 0);
+    $('libStats').textContent = allBooks.length
+      ? `Knížek: ${allBooks.length} · přečtených stran: ${pagesRead} · slov, která znáš: ${ws.filter(w => w.k === 1).length} · slov, která se učíš: ${ws.filter(w => w.l > 0 && w.k !== 1).length}`
+      : '';
     for (const b of books) {
       const li = document.createElement('li');
       const open = document.createElement('button');
       open.className = 'book';
-      const pct = Math.round((b.pos.page + (b.pos.scroll || 0)) / b.pages.length * 100);
-      open.innerHTML = '<b></b><span></span><i><u></u></i>';
-      open.children[0].textContent = b.title;
-      open.children[1].textContent = `${(byCode[b.lang] || byCode.en).name} · strana ${b.pos.page + 1} z ${b.pages.length} · ${pct} %`;
+      const pct = Math.round(prog(b) * 100);
+      open.innerHTML = '<em class="cover"></em><b></b><span></span><i><u></u></i>';
+      if (b.cover) {
+        const u = URL.createObjectURL(b.cover);
+        coverUrls.push(u);
+        open.children[0].style.backgroundImage = `url(${u})`;
+      } else open.children[0].textContent = (b.kind || 'pdf').toUpperCase();
+      open.children[1].textContent = b.title;
+      open.children[2].textContent = `${(byCode[b.lang] || byCode.en).name} · strana ${b.pos.page + 1} z ${b.pages.length} · ${pct} %`;
       open.querySelector('u').style.width = pct + '%';
       open.onclick = () => openBook(b);
       const del = document.createElement('button');
@@ -310,6 +369,7 @@
     $('pageCount').textContent = book.pages.length;
     $('pageNo').max = book.pages.length;
     $('bookLang').value = lang = byCode[book.lang] ? book.lang : 'en';
+    if (App.hooks.open) App.hooks.open();
     show('reader');
     await useLang();
   }
@@ -330,7 +390,8 @@
     return r && r.l > 0 && r.k !== 1 ? 'w lk' : 'w';
   }
 
-  let imgUrls = [];
+  let imgUrls = [], shownAt = 0;
+  const H = Formats.H;
   function renderPage(scrollRatio) {
     const el = $('page');
     const text = book.pages[book.pos.page] || '';
@@ -342,25 +403,31 @@
       return { before: im.before, html: `<figure class="fig"><img src="${u}" style="width:${Math.round(Math.max(0.3, Math.min(1, im.w)) * 100)}%" alt=""></figure>` };
     });
     const paras = text ? text.split('\n') : [];
+    const hls = (book.hls || []).filter(h => h.page === book.pos.page);
     // obrázek patří před odstavec číslo "before"; co je pod posledním odstavcem, jde na konec
     const figsAt = i => figs.filter(f => f.before === i).map(f => f.html).join('');
     const figsEnd = figs.filter(f => f.before >= paras.length).map(f => f.html).join('');
-    el.innerHTML = text ? paras.map((p, pi) => {
+    el.innerHTML = text ? paras.map((raw, pi) => {
+      const head = raw[0] === H, p = head ? raw.slice(1) : raw;
       let html = '', last = 0;
       for (const m of p.matchAll(WORD_RE)) {
-        const r = resolve(m[0]);
+        const key = wkey(resolve(m[0]).lemma);
+        const hl = hls.find(h => h.pi === pi && m.index >= h.a && m.index < h.b);
         html += esc(p.slice(last, m.index)) +
-          `<span class="${wordClass(wkey(r.lemma))}" data-l="${wkey(r.lemma).replace(/"/g, '')}">${m[0]}</span>`;
+          `<span class="${wordClass(key)}${hl ? ' hl' + (hl.note ? ' note' : '') : ''}" data-l="${key.replace(/"/g, '')}" data-o="${m.index}">${m[0]}</span>`;
         last = m.index + m[0].length;
       }
-      return figsAt(pi) + '<p>' + html + esc(p.slice(last)) + '</p>';
+      const tag = head ? 'h3' : 'p';
+      return figsAt(pi) + `<${tag} data-pi="${pi}">` + html + esc(p.slice(last)) + `</${tag}>`;
     }).join('') + figsEnd : figsEnd || '<p class="hint">(na této straně není žádný text)</p>';
     $('pageNo').value = book.pos.page + 1;
     $('prev').disabled = book.pos.page === 0;
     $('next').disabled = book.pos.page >= book.pages.length - 1;
     hidePopup();
     el.scrollTop = (scrollRatio || 0) * Math.max(0, el.scrollHeight - el.clientHeight);
+    shownAt = Date.now();
     savePos();
+    if (App.hooks.render) App.hooks.render();
   }
 
   let posTimer = 0;
@@ -380,7 +447,12 @@
   function goTo(i, viaNext) {
     i = Math.max(0, Math.min(book.pages.length - 1, i));
     if (i === book.pos.page) return;
-    if (viaNext) countPageAsRead(book.pos.page);
+    if (viaNext) {
+      countPageAsRead(book.pos.page);
+      // rychlost čtení (kvůli odhadu, kolik času zbývá): stránky čtené 3 s až 10 min
+      const dt = Date.now() - shownAt, len = (book.pages[book.pos.page] || '').length;
+      if (dt > 3000 && dt < 600000 && len > 200) { book.ms = (book.ms || 0) + dt; book.chars = (book.chars || 0) + len; }
+    }
     book.pos = { page: i, scroll: 0 };
     renderPage(0);
   }
@@ -472,7 +544,7 @@
   function remark(lemma) {
     const cls = wordClass(lemma);
     for (const s of $('page').querySelectorAll('.w')) {
-      if (s.dataset.l === lemma) s.className = cls + (s.classList.contains('sel') ? ' sel' : '');
+      if (s.dataset.l === lemma) s.classList.toggle('lk', cls.includes('lk'));
     }
   }
 
@@ -531,10 +603,10 @@
   }
 
   // ---------- události ----------
-  const pdfsOf = list => [...list].filter(x => /\.pdf$/i.test(x.name));
+  const pdfsOf = list => [...list].filter(x => Formats.supported(x.name));
   $('file').onchange = e => { const fs = pdfsOf(e.target.files); e.target.value = ''; if (fs.length) importMany(fs); };
   $('scan').onclick = scanFolder;
-  if (window.Android) $('scan').textContent = 'Najít PDF v telefonu';
+  if (window.Android) $('scan').textContent = 'Najít knížky v telefonu';
   $('dirPick').onchange = e => {
     const fs = pdfsOf(e.target.files);
     e.target.value = '';
@@ -613,6 +685,18 @@
   });
 
   window.addEventListener('pagehide', () => { if (book) putBook(book); kvSet('words', words); });
+
+  $('libSearch').oninput = drawLibrary;
+  $('libSort').onchange = drawLibrary;
+
+  // Co potřebují doplňky v more.js (hledání, záložky, vzhled, kartičky, záloha…).
+  const App = window.App = {
+    $, esc, byCode, H, hooks: {},
+    get book() { return book; }, get lang() { return lang; }, get words() { return words; },
+    setWords(w) { words = w; kvSet('words', words); },
+    resolve, wkey, wordRec, saveWords, setKnown, remark, putBook, getBooks, kvGet, kvSet, fileGet, goTo, renderPage, showLibrary, show,
+    hidePopup, placePopup, buildVocab, renderVocab, trHtml, glossHtml, savePos,
+  };
 
   // ---------- start ----------
   (async function init() {

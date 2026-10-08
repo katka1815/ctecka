@@ -10,9 +10,13 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.content.ContentValues;
 import android.print.PrintAttributes;
 import android.print.PrintManager;
+import android.provider.MediaStore;
 import android.provider.Settings;
+import android.speech.tts.TextToSpeech;
+import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -29,6 +33,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Locale;
 
 /**
  * Obal kolem webové čtečky: stránky bere z balíčku aplikace (složka assets/www),
@@ -38,6 +44,8 @@ public class MainActivity extends Activity {
     private static final String HOST = "ctecka.app";
     private WebView web;
     private ValueCallback<Uri[]> fileCb;
+    private TextToSpeech tts;
+    private boolean ttsReady;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -68,10 +76,10 @@ public class MainActivity extends Activity {
                 fileCb = cb;
                 Intent i = new Intent(Intent.ACTION_GET_CONTENT);
                 i.addCategory(Intent.CATEGORY_OPENABLE);
-                i.setType("application/pdf");
+                i.setType("*/*");   // PDF, EPUB, FB2, TXT i záloha; čtečka si soubory roztřídí podle přípony
                 i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                 try {
-                    startActivityForResult(Intent.createChooser(i, "Vyber PDF"), 1);
+                    startActivityForResult(Intent.createChooser(i, "Vyber soubor"), 1);
                 } catch (Exception e) {
                     fileCb = null;
                     return false;
@@ -109,9 +117,9 @@ public class MainActivity extends Activity {
             if (path.equals("/__file")) {
                 File f = new File(u.getQueryParameter("p")).getCanonicalFile();
                 String root = Environment.getExternalStorageDirectory().getCanonicalPath();
-                if (!hasAccess() || !f.getPath().startsWith(root) || !f.getName().toLowerCase().endsWith(".pdf"))
+                if (!hasAccess() || !f.getPath().startsWith(root) || !isBook(f.getName()))
                     return status(403, "Forbidden");
-                return new WebResourceResponse("application/pdf", null, new FileInputStream(f));
+                return new WebResourceResponse("application/octet-stream", null, new FileInputStream(f));
             }
             if (path.equals("/")) path = "/index.html";
             InputStream in = getAssets().open("www" + path);
@@ -120,6 +128,11 @@ public class MainActivity extends Activity {
         } catch (Exception e) {
             return status(404, "Not found");
         }
+    }
+
+    private static boolean isBook(String name) {
+        String n = name.toLowerCase();
+        return n.endsWith(".pdf") || n.endsWith(".epub") || n.endsWith(".fb2");
     }
 
     private boolean hasAccess() {
@@ -137,7 +150,7 @@ public class MainActivity extends Activity {
             if (f.isDirectory()) {
                 if (depth == 0 && n.equals("Android")) continue;
                 walk(f, out, depth + 1);
-            } else if (n.toLowerCase().endsWith(".pdf")) {
+            } else if (isBook(n)) {
                 JSONObject o = new JSONObject();
                 o.put("name", n);
                 o.put("path", f.getPath());
@@ -179,6 +192,50 @@ public class MainActivity extends Activity {
             return out.toString();
         }
 
+        /** Přečte text nahlas hlasem telefonu (funguje offline, pokud je hlas pro jazyk nainstalovaný). */
+        @JavascriptInterface
+        public void speak(String text, String langTag) {
+            runOnUiThread(() -> {
+                if (tts == null) {
+                    tts = new TextToSpeech(MainActivity.this, st -> {
+                        ttsReady = st == TextToSpeech.SUCCESS;
+                        if (ttsReady) say(text, langTag);
+                    });
+                } else if (ttsReady) say(text, langTag);
+            });
+        }
+
+        @JavascriptInterface
+        public void stopSpeak() {
+            runOnUiThread(() -> { if (tts != null) tts.stop(); });
+        }
+
+        /** Uloží soubor (záloha, export slovíček) do složky Stažené; vrací zprávu pro uživatele. */
+        @JavascriptInterface
+        public String saveFile(String name, String mime, String base64) {
+            try {
+                byte[] data = Base64.decode(base64, Base64.DEFAULT);
+                OutputStream out;
+                if (Build.VERSION.SDK_INT >= 29) {
+                    ContentValues v = new ContentValues();
+                    v.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
+                    v.put(MediaStore.MediaColumns.MIME_TYPE, mime);
+                    v.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+                    Uri u = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+                    out = getContentResolver().openOutputStream(u);
+                } else {
+                    File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                    dir.mkdirs();
+                    out = new java.io.FileOutputStream(new File(dir, name));
+                }
+                out.write(data);
+                out.close();
+                return "Uloženo do složky Stažené (Download): " + name;
+            } catch (Exception e) {
+                return "Soubor se nepodařilo uložit: " + e.getMessage();
+            }
+        }
+
         @JavascriptInterface
         public void print(String title) {
             runOnUiThread(() -> {
@@ -186,6 +243,22 @@ public class MainActivity extends Activity {
                 pm.print(title, web.createPrintDocumentAdapter(title), new PrintAttributes.Builder().build());
             });
         }
+    }
+
+    private void say(String text, String langTag) {
+        int r = tts.setLanguage(Locale.forLanguageTag(langTag));
+        if (r == TextToSpeech.LANG_MISSING_DATA || r == TextToSpeech.LANG_NOT_SUPPORTED) {
+            android.widget.Toast.makeText(this, "Pro tenhle jazyk nemá telefon nainstalovaný hlas (Nastavení → Převod textu na řeč).",
+                    android.widget.Toast.LENGTH_LONG).show();
+            return;
+        }
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "ctecka");
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (tts != null) tts.shutdown();
+        super.onDestroy();
     }
 
     @Override

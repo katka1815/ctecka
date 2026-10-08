@@ -16,8 +16,8 @@
   <header class="bar">
     <h1>Čtečka</h1>
     <label class="lang">Jazyk knížky <select id="newLang"></select></label>
-    <button id="scan" class="btn" title="Projde složku, kterou vybereš, a najde v ní PDF">Najít PDF ve složce</button>
-    <label class="btn primary">Přidat PDF<input id="file" type="file" accept="application/pdf,.pdf" multiple hidden></label>
+    <button id="scan" class="btn" title="Projde složku, kterou vybereš, a najde v ní knížky">Najít knížky ve složce</button>
+    <label class="btn primary">Přidat knížku<input id="file" type="file" accept=".pdf,.epub,.fb2,.txt,application/pdf,application/epub+zip,text/plain" multiple hidden></label>
     <input id="dirPick" type="file" webkitdirectory multiple hidden>
   </header>
   <p id="importStatus" class="status" hidden></p>
@@ -26,8 +26,22 @@
     <div id="foundList"></div>
     <div class="pbtn"><button id="foundAdd" class="btn primary">Nahrát zaškrtnutá</button><button id="foundCancel" class="btn">Zavřít</button></div>
   </div>
+  <div id="libTools" class="filters" hidden>
+    <input id="libSearch" type="search" placeholder="Hledat knížku">
+    <label>Řazení
+      <select id="libSort">
+        <option value="recent">naposledy čtené</option>
+        <option value="title">podle názvu</option>
+        <option value="added">nově přidané</option>
+        <option value="progress">nejvíc dočtené</option>
+      </select>
+    </label>
+    <button id="backup" class="btn small" title="Uloží slovíčka a knížky do souboru">Záloha do souboru</button>
+    <label class="btn small" title="Načte zálohu z jiného zařízení">Obnovit ze zálohy<input id="restoreFile" type="file" accept=".json,application/json" hidden></label>
+  </div>
+  <p id="libStats" class="hint"></p>
   <ul id="books"></ul>
-  <p id="empty" class="hint">Zatím tu není žádná knížka. Přidej PDF tlačítkem nahoře, nebo ho sem přetáhni.</p>
+  <p id="empty" class="hint">Zatím tu není žádná knížka. Přidej PDF, EPUB, FB2 nebo TXT tlačítkem nahoře, nebo soubor přetáhni sem.</p>
 </section>
 
 <section id="reader" class="view" hidden>
@@ -97,6 +111,8 @@
 <script src="vendor/pdf.min.js"></script>
 <script src="vendor/pdf.worker.min.js"></script>
 <script src="lang.js"></script>
+<script src="formats.js"></script>
 <script src="app.js"></script>
+<script src="more.js"></script>
 </body>
 </html>

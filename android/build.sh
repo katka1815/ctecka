@@ -11,7 +11,7 @@ JAR="$ROOT/sdk/platforms/android-34/android.jar"
 VERSION_CODE=${1:-1}
 
 rm -rf build && mkdir -p build/classes build/assets/www/dict build/assets/www/vendor build/res/mipmap-xxxhdpi
-cp "$WEB"/{index.html,app.js,lang.js,style.css,manifest.webmanifest,icon-192.png,icon-512.png} build/assets/www/
+cp "$WEB"/{index.html,app.js,lang.js,formats.js,more.js,style.css,manifest.webmanifest,icon-192.png,icon-512.png} build/assets/www/
 cp "$WEB"/dict/*.js build/assets/www/dict/
 cp "$WEB"/vendor/* build/assets/www/vendor/
 cp "$WEB/icon-192.png" build/res/mipmap-xxxhdpi/ic_launcher.png

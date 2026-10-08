@@ -1,9 +1,9 @@
 // Offline: stránku čtečky a slovníky drží v paměti zařízení, takže po prvním načtení funguje bez internetu.
 // Nikam nic neposílá; obsluhuje jen soubory čtečky samotné.
-const SHELL = 'ctecka-shell-v1';
+const SHELL = 'ctecka-shell-v2';
 const DICT = 'ctecka-dict-v1';
 const FILES = ['./', 'index.html', 'style.css', 'app.js', 'lang.js', 'vendor/pdf.min.js', 'vendor/pdf.worker.min.js',
-  'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
+  'formats.js', 'more.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

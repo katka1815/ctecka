@@ -2,7 +2,7 @@
 // Další jazyk = další soubor ve složce dict/ a další sada pravidel tady.
 (function () {
   const LANGS = [
-    { code: 'en', name: 'angličtina', files: ['en-cs', 'en-common'], primary: 'cs' },
+    { code: 'en', name: 'angličtina', files: ['en-cs', 'en-common', 'en-phr'], primary: 'cs' },
     { code: 'de', name: 'němčina', primary: 'cs', links: ['s', 'es', 'n', 'en', 'e', 'er', '-'] },
     { code: 'fr', name: 'francouzština', primary: 'cs' },
     { code: 'es', name: 'španělština', primary: 'cs' },
@@ -15,7 +15,7 @@
     { code: 'dsb', name: 'dolnolužická srbština', primary: 'en' },
   ];
   // Verze slovníků: po každém přegenerování souborů v dict/ zvednout, jinak zůstanou v offline paměti staré.
-  const DICT_V = 3;
+  const DICT_V = 4;
   const byCode = Object.fromEntries(LANGS.map(l => [l.code, l]));
   window.DICTS = window.DICTS || {};
   window.FORMS = window.FORMS || {};
