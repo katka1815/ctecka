@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Čtečka</title>
+<meta name="theme-color" content="#9a5b2e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<section id="library" class="view">
+  <header class="bar">
+    <h1>Čtečka</h1>
+    <label class="lang">Jazyk knížky <select id="newLang"></select></label>
+    <button id="scan" class="btn" title="Projde složku, kterou vybereš, a najde v ní PDF">Najít PDF ve složce</button>
+    <label class="btn primary">Přidat PDF<input id="file" type="file" accept="application/pdf,.pdf" multiple hidden></label>
+    <input id="dirPick" type="file" webkitdirectory multiple hidden>
+  </header>
+  <p id="importStatus" class="status" hidden></p>
+  <div id="found" hidden>
+    <p id="foundInfo"></p>
+    <div id="foundList"></div>
+    <div class="pbtn"><button id="foundAdd" class="btn primary">Nahrát zaškrtnutá</button><button id="foundCancel" class="btn">Zavřít</button></div>
+  </div>
+  <ul id="books"></ul>
+  <p id="empty" class="hint">Zatím tu není žádná knížka. Přidej PDF tlačítkem nahoře, nebo ho sem přetáhni.</p>
+</section>
+
+<section id="reader" class="view" hidden>
+  <header class="bar">
+    <button id="toLibrary" class="btn" title="Zpět do knihovny">‹ Knihovna</button>
+    <span id="bookTitle" class="title"></span>
+    <span class="spacer"></span>
+    <select id="bookLang" title="Jazyk knížky"></select>
+    <button id="fontMinus" class="btn" title="Menší písmo">A−</button>
+    <button id="fontPlus" class="btn" title="Větší písmo">A+</button>
+    <button id="openVocab" class="btn">Slovníček</button>
+  </header>
+  <article id="page"></article>
+  <footer class="bar pager">
+    <button id="prev" class="btn">‹ Předchozí</button>
+    <span>strana <input id="pageNo" type="number" min="1" value="1"> / <span id="pageCount"></span></span>
+    <button id="next" class="btn">Další ›</button>
+  </footer>
+</section>
+
+<section id="vocab" class="view" hidden>
+  <header class="bar noprint">
+    <button id="toReader" class="btn">‹ Zpět ke čtení</button>
+    <span class="title">Slovníček</span>
+    <span class="spacer"></span>
+    <button id="print" class="btn primary">Vytisknout</button>
+  </header>
+  <div class="filters noprint">
+    <label>Rozsah
+      <select id="fScope">
+        <option value="all">celá kniha</option>
+        <option value="read">co už jsem přečetla</option>
+        <option value="rest">co mě teprve čeká</option>
+      </select>
+    </label>
+    <label>Řazení
+      <select id="fSort">
+        <option value="freq">nejčastější první</option>
+        <option value="order">podle výskytu v knize</option>
+        <option value="abc">abecedně</option>
+      </select>
+    </label>
+    <label>Výskytů aspoň
+      <select id="fMin"><option>1</option><option>2</option><option>3</option><option>5</option><option>10</option></select>
+    </label>
+    <label id="fCommonWrap">Přeskočit nejběžnější slova
+      <select id="fCommon"><option value="0">žádná</option><option>500</option><option selected>1000</option><option>2000</option><option>3000</option><option>5000</option></select>
+    </label>
+    <label class="chk"><input id="fHideKnown" type="checkbox" checked> skrýt slova, která znám</label>
+    <label class="chk"><input id="fOnlyTr" type="checkbox" checked> jen slova s překladem</label>
+  </div>
+  <h2 id="vocabTitle"></h2>
+  <p id="vocabInfo" class="hint"></p>
+  <div id="vocabList"></div>
+</section>
+
+<div id="popup" hidden>
+  <div class="pw"><b id="pWord"></b><span id="pBase"></span></div>
+  <div id="pTr"></div>
+  <div id="pSeen"></div>
+  <div class="pbtn">
+    <button id="pKnown" class="btn">Znám</button>
+    <button id="pUnknown" class="btn">Neznám</button>
+  </div>
+</div>
+
+<script src="vendor/pdf.min.js"></script>
+<script src="vendor/pdf.worker.min.js"></script>
+<script src="lang.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

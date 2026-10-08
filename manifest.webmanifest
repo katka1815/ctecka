@@ -1,0 +1,15 @@
+{
+  "name": "Čtečka",
+  "short_name": "Čtečka",
+  "description": "Čtení PDF knížek s překladem slov. Funguje offline, nic nikam neposílá.",
+  "lang": "cs",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f1e7",
+  "theme_color": "#9a5b2e",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

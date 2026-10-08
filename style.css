@@ -1,0 +1,141 @@
+:root {
+  --bg: #f6f1e7; --paper: #fffdf8; --ink: #2b2620; --muted: #7a7166; --line: #ded5c4;
+  --accent: #9a5b2e; --accent-ink: #fff; --mark: #e8a13a; --ok: #3f7d4e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1a17; --paper: #24211d; --ink: #e6dfd3; --muted: #9a9185; --line: #3a362f;
+    --accent: #d39a68; --accent-ink: #1c1a17; --mark: #e8a13a; --ok: #7fbf8e;
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.4 system-ui, "Segoe UI", sans-serif; }
+[hidden] { display: none !important; }
+
+.view { height: 100%; display: flex; flex-direction: column; max-width: 860px; margin: 0 auto; }
+.bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; flex: none; }
+.bar h1 { font-size: 22px; margin: 0; flex: 1; }
+.title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.spacer { flex: 1; }
+.btn {
+  font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--line);
+  border-radius: 8px; padding: 7px 12px; cursor: pointer; white-space: nowrap;
+}
+.btn:hover { border-color: var(--accent); }
+.btn:disabled { opacity: .4; cursor: default; }
+.btn.primary, .btn.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.hint, .status { color: var(--muted); padding: 0 16px; }
+.status { color: var(--ink); }
+
+/* knihovna */
+#books { list-style: none; margin: 0; padding: 0 16px; overflow: auto; }
+#books li { display: flex; gap: 8px; align-items: stretch; margin-bottom: 10px; }
+.book {
+  flex: 1; text-align: left; font: inherit; color: inherit; background: var(--paper);
+  border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; cursor: pointer;
+  display: grid; gap: 4px; min-width: 0;
+}
+.book:hover { border-color: var(--accent); }
+.book b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.book span { color: var(--muted); font-size: 14px; }
+.book i { display: block; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.book u { display: block; height: 100%; background: var(--accent); }
+.del { align-self: center; }
+
+#found { margin: 0 16px 12px; padding: 12px 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+#found p { margin: 0 0 8px; }
+#foundList { max-height: 45vh; overflow: auto; margin-bottom: 10px; }
+#foundList .chk { padding: 5px 0; align-items: flex-start; overflow-wrap: anywhere; }
+#foundList small { display: block; color: var(--muted); }
+
+/* čtení */
+#page {
+  flex: 1; overflow-y: auto; background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+  margin: 0 16px; padding: 22px 28px; font: 19px/1.65 Georgia, "Palatino Linotype", "Times New Roman", serif;
+}
+#page p { margin: 0 0 .8em; }
+.fig { margin: 0 0 1em; text-align: center; }
+.fig img { max-width: 100%; height: auto; border-radius: 4px; }
+.w { cursor: pointer; border-radius: 3px; }
+.w:hover { background: color-mix(in srgb, var(--mark) 25%, transparent); }
+.w.lk { border-bottom: 2px dotted var(--mark); }
+.w.sel { background: color-mix(in srgb, var(--mark) 45%, transparent); }
+.pager { justify-content: space-between; }
+#pageNo {
+  width: 64px; font: inherit; text-align: center; padding: 5px; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--paper); color: var(--ink);
+}
+
+/* okénko s překladem */
+#popup {
+  position: fixed; z-index: 10; width: min(340px, calc(100vw - 16px)); background: var(--paper);
+  border: 1px solid var(--accent); border-radius: 10px; padding: 12px 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .25);
+}
+.pw { font-size: 18px; margin-bottom: 6px; }
+#pBase { color: var(--muted); }
+#pTr { max-height: 40vh; overflow: auto; }
+#pTr i { color: var(--muted); font-size: 13px; margin-right: 4px; }
+#pTr .own { border-bottom: 1px solid var(--line); padding-bottom: 5px; margin-bottom: 5px; }
+#pSeen { margin: 10px 0; font-size: 14px; padding: 6px 9px; border-radius: 6px; background: var(--bg); }
+#pSeen.known { color: var(--ok); }
+#pSeen.again { border-left: 3px solid var(--mark); }
+#pSeen.seen { border-left: 3px solid var(--muted); }
+#pSeen.new { border-left: 3px solid var(--accent); }
+.pbtn { display: flex; gap: 8px; }
+.pbtn .btn { flex: 1; }
+
+#pTr .g { margin-bottom: 6px; }
+#pTr small { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+#pTr .alt { border-top: 1px solid var(--line); padding-top: 5px; margin-top: 5px; }
+#pTr .alt b { display: block; font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+#pTr .gram { font-size: 14px; color: var(--accent); margin-bottom: 6px; }
+#pTr .alt .gram { font-weight: 400; }
+#pPivotOut { margin-top: 6px; }
+.btn.small { padding: 4px 10px; font-size: 14px; }
+.lang { font-size: 14px; color: var(--muted); }
+.bar select {
+  font: inherit; font-size: 14px; padding: 6px; background: var(--paper); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 8px; max-width: 150px;
+}
+
+/* slovníček */
+#vocab { overflow-y: auto; display: block; }
+.filters { display: flex; flex-wrap: wrap; gap: 10px 18px; padding: 4px 16px 10px; align-items: center; font-size: 14px; }
+.filters select { font: inherit; padding: 4px; margin-left: 4px; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; }
+.chk { display: flex; align-items: center; gap: 5px; }
+#vocab h2 { font-size: 18px; margin: 6px 16px; }
+#vocabList { padding: 8px 16px 40px; }
+.row { display: grid; grid-template-columns: 22px 150px 44px 1fr; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+.row b { overflow-wrap: anywhere; }
+.row.lk b { border-bottom: 2px dotted var(--mark); justify-self: start; }
+.row small { color: var(--muted); text-align: right; }
+
+/* mobil */
+@media (max-width: 600px) {
+  .bar { flex-wrap: wrap; padding: 8px; }
+  .bar h1 { flex-basis: 100%; }
+  #reader .title { flex-basis: 100%; order: -1; }
+  #reader .spacer { display: none; }
+  #bookLang { flex: 1; max-width: none; }
+  #page { margin: 0 8px; padding: 14px 16px; }
+  #books, .hint, .status { padding-left: 8px; padding-right: 8px; }
+  #found { margin: 0 8px 12px; }
+  .row { grid-template-columns: 22px 110px 36px 1fr; }
+}
+
+@media print {
+  :root { --bg: #fff; --paper: #fff; --ink: #000; --muted: #555; --line: #ccc; }
+  .noprint, #library, #reader, #popup { display: none !important; }
+  html, body, .view { height: auto; }
+  .view { max-width: none; }
+  #vocab { overflow: visible; }
+  #vocab h2 { margin: 0 0 8px; }
+  #vocabInfo { display: none; }
+  #vocabList { padding: 0; columns: 2; column-gap: 24px; font-size: 10.5pt; }
+  .row { grid-template-columns: 30% 1fr; gap: 6px; padding: 2px 0; break-inside: avoid; }
+  .row small { display: none; }
+  .row.lk b { border: 0; }
+  @page { margin: 14mm; }
+}
