@@ -250,16 +250,42 @@
       }
     }
   }
+  // Nalezené soubory jdou protřídit podle počtu stran, ať se mezi knížky nepletou vstupenky a účtenky.
+  // Počet stran známe jen u PDF (pages); EPUB a FB2 projdou vždy, stejně jako PDF, u kterého se zjistit nedal.
   function showFound(list) {
     found = list;
-    const box = $('found');
-    box.hidden = false;
-    $('foundInfo').textContent = list.length
-      ? `Našla jsem ${list.length} knížek (PDF, EPUB, FB2, TXT). Zaškrtni, které chceš nahrát (jazyk: ${byCode[$('newLang').value].name}, jde změnit i při čtení).`
+    $('found').hidden = false;
+    drawFound();
+  }
+  function drawFound() {
+    const min = +$('foundMin').value;
+    const keep = found.map((f, i) => ({ f, i })).filter(x => !(x.f.pages > 0 && x.f.pages < min));
+    const hid = found.length - keep.length;
+    $('foundInfo').textContent = found.length
+      ? `Nalezeno souborů (PDF, EPUB, FB2): ${found.length}` + (hid ? `, z toho ${hid} schovaných (mají méně stran než ${min})` : '') +
+        `. Zaškrtni, které chceš nahrát (jazyk: ${byCode[$('newLang').value].name}, jde změnit i při čtení).`
       : 'Žádnou knížku (PDF, EPUB, FB2, TXT) jsem tu nenašla.';
-    $('foundList').innerHTML = list.map((f, i) =>
-      `<label class="chk"><input type="checkbox" data-i="${i}"> <span>${esc(f.name)}<small>${esc(f.path)}</small></span></label>`).join('');
-    $('foundAdd').hidden = !list.length;
+    $('foundList').innerHTML = keep.map(({ f, i }) =>
+      `<label class="chk"><input type="checkbox" data-i="${i}"> <span>${esc(f.name)}<small>${f.pages > 0 ? f.pages + ' stran · ' : ''}${esc(f.path)}</small></span></label>`).join('');
+    $('foundAdd').hidden = !keep.length;
+    $('foundFilter').hidden = !found.length;
+  }
+  // V prohlížeči se počet stran zjišťuje otevřením každého PDF (v apk ho dodá telefon rovnou).
+  async function countPages(list) {
+    const st = $('importStatus');
+    st.hidden = false;
+    for (let i = 0; i < list.length; i++) {
+      const f = list[i];
+      if (!/\.pdf$/i.test(f.name)) continue;
+      st.textContent = `Zjišťuji počet stran… ${i + 1} z ${list.length}`;
+      try {
+        const task = pdfjsLib.getDocument({ data: await (await f.get()).arrayBuffer() });
+        const pdf = await task.promise;
+        f.pages = pdf.numPages;
+        await task.destroy();
+      } catch (e) { /* nejde otevřít: nechám v seznamu bez počtu */ }
+    }
+    st.hidden = true;
   }
   // V androidí aplikaci (apk) jde po povolení projít celé úložiště telefonu naráz.
   async function scanPhone() {
@@ -276,7 +302,7 @@
     const list = JSON.parse(A.listPdfs());
     st.hidden = true;
     showFound(list.map(f => ({
-      name: f.name, path: f.path.replace(/^\/storage\/emulated\/0\//, '').replace(/[^/]*$/, ''),
+      name: f.name, pages: f.pages, path: f.path.replace(/^\/storage\/emulated\/0\//, '').replace(/[^/]*$/, ''),
       get: async () => new File([await (await fetch('/__file?p=' + encodeURIComponent(f.path))).blob()], f.name),
     })));
   }
@@ -291,7 +317,7 @@
       st.hidden = false; st.textContent = 'Prohledávám složku…';
       const out = [];
       await walk(dir, dir.name + '/', out, 0);
-      st.hidden = true;
+      await countPages(out);
       showFound(out);
     } else $('dirPick').click();
   }
@@ -623,8 +649,10 @@
   $('dirPick').onchange = e => {
     const fs = pdfsOf(e.target.files);
     e.target.value = '';
-    showFound(fs.map(f => ({ name: f.name, path: (f.webkitRelativePath || '').replace(/[^/]*$/, ''), get: async () => f })));
+    const list = fs.map(f => ({ name: f.name, path: (f.webkitRelativePath || '').replace(/[^/]*$/, ''), get: async () => f }));
+    countPages(list).then(() => showFound(list));
   };
+  $('foundMin').onchange = e => { kvSet('foundMin', e.target.value); drawFound(); };
   $('foundCancel').onclick = () => { $('found').hidden = true; found = []; };
   $('foundAdd').onclick = async () => {
     const picked = [...$('foundList').querySelectorAll('input:checked')].map(c => found[+c.dataset.i]);
@@ -715,6 +743,7 @@
   (async function init() {
     words = (await kvGet('words')) || {};
     $('newLang').value = (await kvGet('newLang')) || 'en';
+    $('foundMin').value = (await kvGet('foundMin')) || '3';
     setFont((await kvGet('fontSize')) || fontSize);
     const last = await kvGet('lastBook');
     const b = last && (await getBooks()).find(x => x.id === last);

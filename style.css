@@ -49,6 +49,7 @@ body { background: var(--bg); color: var(--ink); font: 16px/1.4 system-ui, "Sego
 
 #found { margin: 0 16px 12px; padding: 12px 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
 #found p { margin: 0 0 8px; }
+#found select { font: inherit; padding: 4px; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; }
 #foundList { max-height: 45vh; overflow: auto; margin-bottom: 10px; }
 #foundList .chk { padding: 5px 0; align-items: flex-start; overflow-wrap: anywhere; }
 #foundList small { display: block; color: var(--muted); }

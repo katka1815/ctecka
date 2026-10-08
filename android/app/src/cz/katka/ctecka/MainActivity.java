@@ -140,6 +140,16 @@ public class MainActivity extends Activity {
         return checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
+    /** Počet stran PDF (kvůli odfiltrování vstupenek a účtenek); 0, když se nedá zjistit. */
+    private static int pdfPages(File f) {
+        try (android.os.ParcelFileDescriptor fd = android.os.ParcelFileDescriptor.open(f, android.os.ParcelFileDescriptor.MODE_READ_ONLY);
+             android.graphics.pdf.PdfRenderer r = new android.graphics.pdf.PdfRenderer(fd)) {
+            return r.getPageCount();
+        } catch (Throwable e) {
+            return 0;
+        }
+    }
+
     private void walk(File dir, JSONArray out, int depth) throws Exception {
         if (depth > 8 || out.length() >= 1000) return;
         File[] list = dir.listFiles();
@@ -154,6 +164,7 @@ public class MainActivity extends Activity {
                 JSONObject o = new JSONObject();
                 o.put("name", n);
                 o.put("path", f.getPath());
+                if (n.toLowerCase().endsWith(".pdf")) o.put("pages", pdfPages(f));
                 out.put(o);
             }
         }

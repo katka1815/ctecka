@@ -1,6 +1,6 @@
 # Čtečka: dokumentace
 
-Stav k 8. 10. 2026 (apk verze 3). Popisuje, co čtečka je, jak je udělaná a proč, co je ověřené,
+Stav k 8. 10. 2026 (apk verze 4). Popisuje, co čtečka je, jak je udělaná a proč, co je ověřené,
 co nefungovalo a jak se to obešlo.
 
 ## 1. Co to je
@@ -124,6 +124,7 @@ uložení souboru do Stažených, tisk a tlačítko Zpět.
 | Aplikace z prohlížeče nesmí projít celý telefon (jen vybranou složku, a ne Stažené) | Proto vzniklo apk, které to po povolení umí. |
 | V androidím okně nefunguje hlas prohlížeče ani stahování souborů | Obal je dělá sám (hlas telefonu, uložení do Stažených). |
 | GitHub přihlášení nemá právo nahrávat automatizace, takže apk nejde stavět v cloudu | Staví se na počítači ve složce `C:\Users\42073\android-build`. |
+| Hledání v telefonu našlo i vstupenky a účtenky | Filtr podle počtu stran (výchozí: aspoň 3); počet stran dodá v apk telefon, v prohlížeči se PDF kvůli tomu otevře. |
 | Zobrazení původní stránky potřebuje původní PDF, které se dřív neukládalo | Od verze 2 se ukládá; starší knížky je potřeba nahrát znovu. |
 
 ## 7. Co je ověřené a co ne
@@ -133,15 +134,16 @@ nahrání PDF, EPUB, FB2 a TXT včetně obrázků a obálek, překlad slova, tva
 překlad označeného textu, zvýraznění, záložky, obsah, hledání, vzhled, kartičky, export, záloha s obnovou,
 původní stránka, přejmenování, offline paměť, nahrání víc souborů najednou.
 
+**Ověřeno Katkou na telefonu (apk):** čtení a hledání knížek v úložišti (najde všechna PDF).
+
 **Ověřeno jen výpisem ze slovníku, ne v prohlížeči:** tvary slov v němčině, španělštině, italštině
 a latině.
 
 **Neověřeno:**
 - Firefox (na počítači i v mobilu),
 - iPhone,
-- v apk všechno, co dělá jen obal: hledání knížek v úložišti, hlas telefonu, ukládání zálohy a exportu,
-  tisk slovníčku, výběr jiných souborů než PDF. Apk se podařilo postavit a podepsat a po instalaci
-  na telefonu podle Katky funguje; tyhle části ale nikdo cíleně nezkoušel,
+- v apk: hlas telefonu, ukládání zálohy a exportu, tisk slovníčku, výběr jiných souborů než PDF
+  a počítání stran u nalezených PDF (přidáno ve verzi 4),
 - hledání ve složce v prohlížeči (systémové okno nejde ovládat automaticky).
 
 ## 8. Známá omezení
