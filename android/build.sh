@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Postaví Ctecka.apk z webové čtečky (Desktop/ctecka) a androidího obalu (app/). Spouštět v Git Bash: bash build.sh
+# Postaví Ctecka.apk z webové čtečky (Desktop/projekty/ctecka) a androidího obalu (app/). Spouštět v Git Bash: bash build.sh
 set -e
 cd "$(dirname "$0")"
 ROOT="C:/Users/42073/android-build"
-WEB="C:/Users/42073/Desktop/ctecka"
+WEB="C:/Users/42073/Desktop/projekty/ctecka"
 export JAVA_HOME="$ROOT/jdk-17.0.20.1+1"
 export PATH="$(cygpath -u "$JAVA_HOME")/bin:$PATH"
 BT="$ROOT/sdk/build-tools/34.0.0"
