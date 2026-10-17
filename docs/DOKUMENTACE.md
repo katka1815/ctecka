@@ -39,6 +39,7 @@ přes „Záloha do souboru" a „Obnovit ze zálohy".
 | `lang.js` | Jazyky, načítání slovníků, převod slova na základní tvar, složeniny. |
 | `formats.js` | Načtení EPUB, FB2 a TXT (včetně vlastního čtení zip archivu). |
 | `more.js` | Nabídka u knížky (obsah, hledání, záložky, vzhled), označený text, výslovnost, kartičky, záloha. |
+| `pair.js` | Čtení s překladem vedle: párování vět dvou knížek a zvýraznění odpovídajícího slova. |
 | `sw.js`, `manifest.webmanifest`, `icon-*.png` | Instalace z prohlížeče a offline provoz. |
 | `dict/` | Slovníky jako datové soubory (175 MB). |
 | `vendor/` | pdf.js 3.11 (čtení PDF). |
@@ -81,6 +82,30 @@ potřeba.
 - **Tvar slova:** pád, číslo, osoba, čas se berou z tabulek skloňování a časování ve Wikislovníku
   a převádějí do češtiny (`tools/gram.py`).
 - **Anglické fráze:** 16,7 tisíce víceslovných hesel („give up") v `dict/en-phr.js`.
+
+### Překlad vedle (`pair.js`)
+Knížka se spáruje s jinou knížkou z knihovny, která je jejím překladem (čeština, angličtina, nebo jiný jazyk).
+Stránky dvou vydání si neodpovídají, proto se párují **věty**:
+
+1. Obě knížky se rozdělí na věty (konec věty = . ! ? … a velké písmeno za mezerou; věta nepřechází přes odstavec).
+2. Každé slovo originálu dostane klíče ze svého výkladu ve slovníku (u jazyků bez českého slovníku přes angličtinu);
+   slovo překladu klíč ze základního tvaru (angličtina) nebo začátku slova bez koncovky (čeština). Navíc se
+   porovnávají jména a podobná slova (Gregor, Familie/family).
+3. **Kotvy:** věty, které mají v překladu jasný protějšek (hlavně přes vzácná slova), a z nich nejdelší řada jdoucí
+   stejným směrem. Platí jen kotvy v řadě aspoň tří, které spolu drží běžný poměr délek (osamocená chybná kotva
+   by posunula celý pás). Přesně se pak páruje jen v pásu mezi sousedními kotvami, jinak by to u velké knížky trvalo minuty.
+4. **Párování** (dynamické programování): úsek je 0–3 věty vlevo k 0–3 větám vpravo; hodnotí se podíl slov
+   s překladem na druhé straně, poměr délek a srážka za vynechanou větu (předmluva, poznámky).
+
+Výsledek se uloží do knížky (`pair: { id, tl, on, anchors, beads, sig, v }`) a počítá se znovu, jen když se změní
+rozdělení na věty, jazyk knížky nebo verze postupu (`PV` v `pair.js`). Okno párování odhadne jazyk originálu podle
+častých slov (`guessLang`) a upozorní, když knížka má nastavený jiný jazyk – se špatným slovníkem se páruje hůř. Po klepnutí na slovo se zvýrazní odpovídající věty
+a slovo s nejbližším klíčem na podobném místě věty. Tlačítko **Opravit**: klepnutí na větu vlevo a pak vpravo
+přidá ruční kotvu a věty se od ní spárují znovu. Zkoušeno i s odstavci jako dalším signálem – nepomohly, takže v postupu nejsou.
+
+Ověřeno (Node a Chrome): Kafka *Proměna* německy ↔ anglicky (Gutenberg), i s uměle přidanou předmluvou a vynechaným
+kusem; Goethe *Faust* (verše, 10 stran předmluvy navíc); začátek *Proměny* německy ↔ vlastní český překlad.
+Kniha o 450 stranách se páruje asi 3 s.
 
 ### Paměť slov
 Pro každý základní tvar: kolikrát byl přečten, kolikrát přeložen a jestli je označen jako známý. Stránka
@@ -150,7 +175,8 @@ a latině.
 
 - Skenovaná PDF (stránky jako obrázky) přečíst neumí.
 - Kreslené ilustrace v PDF (čáry, grafy) se v textu neukážou, jen přes „původní stránku".
-- Překlad je slovo po slovu, celé věty nepřekládá.
+- Překlad je slovo po slovu, celé věty nepřekládá (celé věty ukáže jen překlad vedle, když je knížka v knihovně i přeložená).
+- Překlad vedle: slovo se v překladu najde jen tehdy, když jeho výklad ve slovníku obsahuje slovo, které překladatel použil; jinak se zvýrazní jen věta. U jazyka překladu „jiný“ se páruje jen podle jmen a délky vět (na Proměně i tak 95 % vět).
 - Odhad základního tvaru se u angličtiny občas splete („tired" → „tire").
 - Když tvar odpovídá víc pádům, vypíšou se až tři možnosti; z věty se nepozná, která platí.
 - Složenina se rozloží jen tehdy, když slovník zná všechny její části.

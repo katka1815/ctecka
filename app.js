@@ -698,6 +698,7 @@
     const w = e.target.closest('.w');
     if (w) showPopup(w); else hidePopup();
   });
+  $('pClose').onclick = hidePopup;
   $('pKnown').onclick = () => { const l = popLemma; setKnown(l, true); hidePopup(); remark(l); };
   $('pUnknown').onclick = () => { const l = popLemma; setKnown(l, false); hidePopup(); remark(l); };
 
