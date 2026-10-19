@@ -1,6 +1,6 @@
 # Čtečka: dokumentace
 
-Stav k 8. 10. 2026 (apk verze 4). Popisuje, co čtečka je, jak je udělaná a proč, co je ověřené,
+Stav k 19. 10. 2026 (apk verze 5). Popisuje, co čtečka je, jak je udělaná a proč, co je ověřené,
 co nefungovalo a jak se to obešlo.
 
 ## 1. Co to je
@@ -105,7 +105,9 @@ přidá ruční kotvu a věty se od ní spárují znovu. Zkoušeno i s odstavci 
 
 Ověřeno (Node a Chrome): Kafka *Proměna* německy ↔ anglicky (Gutenberg), i s uměle přidanou předmluvou a vynechaným
 kusem; Goethe *Faust* (verše, 10 stran předmluvy navíc); začátek *Proměny* německy ↔ vlastní český překlad.
-Kniha o 450 stranách se páruje asi 3 s.
+Kniha o 450 stranách se páruje asi 3 s. Bez slovníku (jazyk překladu „jiný“) sedí na *Proměně* 95 % vět
+a žádná neujede o víc než pár vět; pás z kotev dává skoro totéž co pomalé párování bez pásu (Faust 99,6 %).
+Sloupec s překladem ukazuje přesně spárované věty, bez okolního textu.
 
 ### Paměť slov
 Pro každý základní tvar: kolikrát byl přečten, kolikrát přeložen a jestli je označen jako známý. Stránka
@@ -150,6 +152,11 @@ uložení souboru do Stažených, tisk a tlačítko Zpět.
 | V androidím okně nefunguje hlas prohlížeče ani stahování souborů | Obal je dělá sám (hlas telefonu, uložení do Stažených). |
 | GitHub přihlášení nemá právo nahrávat automatizace, takže apk nejde stavět v cloudu | Staví se na počítači ve složce `C:\Users\42073\android-build`. |
 | Hledání v telefonu našlo i vstupenky a účtenky | Filtr podle počtu stran (výchozí: aspoň 3); počet stran dodá v apk telefon, v prohlížeči se PDF kvůli tomu otevře. |
+| Překlad vedle ujížděl: německá knížka nahraná s předvoleným jazykem „angličtina“ dostala anglický slovník | Okno párování odhadne jazyk a nabídne přepnutí; po změně jazyka knížky se párování spočítá znovu. |
+| Pár chybných kotev (shoda jen podle jmen) posunul celý pás o desítky vět | Platí jen kotvy v řadě aspoň tří, které spolu souhlasí. |
+| Nad spárovaným úsekem visel začátek odstavce a dvě „souvislostní“ věty (ve Firefoxu bez posunutí vypadalo jako půl cizí strany) | Sloupec ukazuje jen spárované věty. |
+| Service worker bral soubory „nejdřív ze sítě“, ale přes HTTP cache prohlížeče, takže úpravy se projevily až po hodině | Žádost jde s `cache: 'no-cache'`, instalace s `reload`; staré verze cache se při aktivaci mažou. |
+| `build.sh` nebalil nový `pair.js`, apk by párování neměla | Doplněno; nový soubor čtečky je nutné přidat do `build.sh` i do `FILES` v `sw.js`. |
 | Zobrazení původní stránky potřebuje původní PDF, které se dřív neukládalo | Od verze 2 se ukládá; starší knížky je potřeba nahrát znovu. |
 
 ## 7. Co je ověřené a co ne
@@ -159,7 +166,12 @@ nahrání PDF, EPUB, FB2 a TXT včetně obrázků a obálek, překlad slova, tva
 překlad označeného textu, zvýraznění, záložky, obsah, hledání, vzhled, kartičky, export, záloha s obnovou,
 původní stránka, přejmenování, offline paměť, nahrání víc souborů najednou.
 
+Překlad vedle (Chrome a Node, na textových souborech z Gutenbergu): párování, zvýraznění slov oběma směry,
+oprava, upozornění na špatný jazyk, mobilní rozložení, uložení po obnovení stránky.
+
 **Ověřeno Katkou na telefonu (apk):** čtení a hledání knížek v úložišti (najde všechna PDF).
+
+**Ověřeno Katkou v prohlížeči (19. 10.):** překlad vedle s estonštinou („jakžtakž ujde“).
 
 **Ověřeno jen výpisem ze slovníku, ne v prohlížeči:** tvary slov v němčině, španělštině, italštině
 a latině.
@@ -168,7 +180,8 @@ a latině.
 - Firefox (na počítači i v mobilu),
 - iPhone,
 - v apk: hlas telefonu, ukládání zálohy a exportu, tisk slovníčku, výběr jiných souborů než PDF
-  a počítání stran u nalezených PDF (přidáno ve verzi 4),
+  a počítání stran u nalezených PDF (přidáno ve verzi 4), překlad vedle (verze 5),
+- překlad vedle na skutečných PDF (zlomy stránek uprostřed vět a odstavců),
 - hledání ve složce v prohlížeči (systémové okno nejde ovládat automaticky).
 
 ## 8. Známá omezení
@@ -187,7 +200,9 @@ a latině.
 
 ## 9. Jak vydat novou verzi
 
-1. Upravit soubory ve složce `ctecka`. Po přegenerování slovníků zvednout `DICT_V` v `lang.js`.
+1. Upravit soubory ve složce `ctecka`. Po přegenerování slovníků zvednout `DICT_V` v `lang.js`. Po změně postupu
+   párování zvednout `PV` v `pair.js`. Nový soubor čtečky přidat do `FILES` v `sw.js` (a zvednout `SHELL`)
+   a do seznamu v `build.sh`.
 2. Web: `git add -A`, `git commit`, `git push`. GitHub Pages se přestaví samy do minuty.
 3. Apk: v Git Bash `bash C:/Users/42073/android-build/build.sh <číslo verze>` (číslo vždy o jedna vyšší),
    potom `gh release create v<číslo> C:/Users/42073/android-build/Ctecka.apk`.

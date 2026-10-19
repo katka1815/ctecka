@@ -1,6 +1,6 @@
 # Čtečka
 
-Čtení knížek (PDF, EPUB, FB2, TXT) s překladem slov po kliknutí. Funguje offline, nic nikam neposílá: knížky, slovíčka
+Čtení knížek (PDF, EPUB, FB2, TXT) s překladem slov po kliknutí a s překladem celé knížky vedle (věty spárované s jejím překladem z knihovny). Funguje offline, nic nikam neposílá: knížky, slovíčka
 i slovníky zůstávají v zařízení.
 
 Otevřít: https://katka1815.github.io/ctecka/
