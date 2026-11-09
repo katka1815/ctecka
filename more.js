@@ -27,13 +27,20 @@
     </section>`));
 
   // ---------- vzhled ----------
-  const FONTS = { serif: 'Georgia, "Palatino Linotype", "Times New Roman", serif', sans: 'system-ui, "Segoe UI", Roboto, sans-serif', mono: '"Courier New", monospace' };
-  let look = { theme: 'auto', font: 'serif', lh: 1.65, pad: 28 };
+  // stejná nabídka písem jako v Rozcestníku a Bradbury 1000
+  const FONTS = { arial: 'Arial, Helvetica, sans-serif', system: 'system-ui, -apple-system, "Segoe UI", sans-serif', serif: 'Literata, Georgia, "Times New Roman", serif', mono: 'ui-monospace, Consolas, Menlo, monospace' };
+  const OLD_FONT = { sans: 'system' };
+  let look = { theme: 'auto', font: 'arial', lh: 1.65, pad: 28 };
+  try { const f = localStorage.getItem('ctecka_font'); if (FONTS[f]) look.font = f; } catch (e) {}
   const dark = window.matchMedia('(prefers-color-scheme: dark)');
   function applyLook() {
     document.documentElement.dataset.theme = look.theme === 'auto' ? (dark.matches ? 'dark' : 'light') : look.theme;
     const p = $('page');
-    p.style.fontFamily = FONTS[look.font] || FONTS.serif;
+    if (OLD_FONT[look.font]) look.font = OLD_FONT[look.font];
+    const ff = FONTS[look.font] || FONTS.arial;
+    p.style.fontFamily = ff;
+    document.documentElement.style.setProperty('--font', ff);
+    try { localStorage.setItem('ctecka_font', look.font); } catch (e) {}
     p.style.lineHeight = look.lh;
     p.style.paddingLeft = p.style.paddingRight = look.pad + 'px';
   }
@@ -140,8 +147,8 @@
       };
     } else if (tab === 'look') {
       const opt = (key, val, label) => `<button class="btn small${look[key] === val ? ' on' : ''}" data-k="${key}" data-v="${val}">${label}</button>`;
-      body.innerHTML = `<h4>Barvy</h4><div class="rowb">${opt('theme', 'auto', 'Podle systému')}${opt('theme', 'light', 'Světlé')}${opt('theme', 'sepia', 'Sépie')}${opt('theme', 'dark', 'Tmavé')}</div>
-        <h4>Písmo</h4><div class="rowb">${opt('font', 'serif', 'Patkové')}${opt('font', 'sans', 'Bezpatkové')}${opt('font', 'mono', 'Strojové')}</div>
+      body.innerHTML = `<h4>Barvy</h4><div class="rowb">${opt('theme', 'auto', 'Podle systému')}${opt('theme', 'light', 'Světlé')}${opt('theme', 'sepia', 'Sépie')}${opt('theme', 'ziva', 'Živé')}${opt('theme', 'dark', 'Tmavé')}</div>
+        <h4>Písmo</h4><div class="rowb">${opt('font', 'arial', 'Arial')}${opt('font', 'system', 'Systémové')}${opt('font', 'serif', 'Patkové')}${opt('font', 'mono', 'Strojopis')}</div>
         <h4>Velikost písma</h4><div class="rowb"><button class="btn" data-f="-1">A−</button><button class="btn" data-f="1">A+</button></div>
         <h4>Řádkování</h4><div class="rowb"><button class="btn" data-lh="-0.1">Hustší</button><span>${look.lh.toFixed(1)}</span><button class="btn" data-lh="0.1">Řidší</button></div>
         <h4>Okraje</h4><div class="rowb"><button class="btn" data-pad="-8">Užší</button><span>${look.pad}</span><button class="btn" data-pad="8">Širší</button></div>`;
