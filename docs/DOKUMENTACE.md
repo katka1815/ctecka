@@ -114,6 +114,14 @@ Pro každý základní tvar: kolikrát byl přečten, kolikrát přeložen a jes
 se počítá za přečtenou, když se z ní odejde tlačítkem „Další". Slova se pamatují zvlášť pro každý jazyk
 a jsou společná pro všechny knížky v zařízení.
 
+### Vzhled
+V Nabídce → Vzhled: barvy (podle systému, světlé, sépie, Živé, tmavé), písmo (Arial jako výchozí, systémové,
+patkové, strojopis; stejná nabídka jako v Rozcestníku a Bradbury 1000), velikost, řádkování a okraje. Volba
+se ukládá do IndexedDB (`look`) a písmo navíc do localStorage (`ctecka_font`), aby platilo hned při načtení.
+Barvy Živé: Rich Mahogany text, Saffron hlavní tlačítka (text na nich Mahogany), na aktivní prvky a odkazy
+tmavší teal #1a5f8f (kontrast WCAG AA), bez světle modré. Nad seznamem knížek je poznámka, že se knížky
+zpracují jen v prohlížeči, a odkaz na e-knihy Městské knihovny v Praze.
+
 ### Androidí aplikace
 Tenký obal: jedno okno s prohlížečem (WebView), které bere stránky čtečky z balíčku aplikace pod
 smyšlenou adresou `https://ctecka.app/`. Navíc přidává, co web neumí: projití úložiště, hlas telefonu,
@@ -132,6 +140,8 @@ uložení souboru do Stažených, tisk a tlačítko Zpět.
 | GitHub Pages, ne Cloudflare | Cloudflare má limit 25 MB na soubor, čtyři slovníky jsou větší. |
 | Apk stavěné ručně (aapt2, javac, d8), bez Gradle | Jedna obrazovka nepotřebuje velký nástroj; stačí přenosná Java a Android SDK. |
 | Zip pro EPUB napsaný vlastní | Prohlížeč umí rozbalovat sám (`DecompressionStream`), knihovna není potřeba. |
+| Písmo Arial jako výchozí, jednotná nabídka písem ve všech appkách | Přání (2026-11-09): dobře čitelné jednoduché písmo, ve všech appkách stejný výběr. |
+| Ukázka na katerinajochova.cz/projekty/ctecka bere slovníky odsud (GitHub Pages) | Tam jsou soubory nad 25 MB. Ukázku skládá web (`tools/projekty/sestav.mjs` v repu katerinajochova) z téhle složky, po změně čtečky ji tam stačí znovu sestavit. |
 | Vynecháno: MOBI, rozpoznávání textu ve skenech, složky v knihovně | MOBI je uzavřený formát; rozpoznávání textu potřebuje desítky MB dat na jazyk; místo složek je hledání a řazení. |
 
 ## 6. Co nefungovalo a jak se to obešlo
