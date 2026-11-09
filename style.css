@@ -11,10 +11,10 @@
   --bg: #e9dcc3; --paper: #f4e8d0; --ink: #43352a; --muted: #7d6b58; --line: #d3c2a3;
   --accent: #8a4f24; --accent-ink: #fff; --mark: #d98a1f; --ok: #3f7d4e;
 }
-/* Živá: Rich Mahogany text, Saffron hlavní tlačítka, Teal aktivní prvky, White Smoke pozadí, bílá stránka, Light Blue jen tenké okraje.
+/* Živá: Rich Mahogany text, Saffron hlavní tlačítka, Teal aktivní prvky, White Smoke pozadí, bílá stránka, okraje ve světlém tónu #202a25 (místo Light Blue).
    Teal #2176ae má na světlém pozadí jen 4,46:1, na text se bere tmavší #1a5f8f. */
 :root[data-theme="ziva"] {
-  --bg: #f5f3f5; --paper: #ffffff; --ink: #3b0d11; --muted: #5c3337; --line: #c3dfe0;
+  --bg: #f5f3f5; --paper: #ffffff; --ink: #3b0d11; --muted: #5c3337; --line: #d6dbd8;
   --accent: #e3b505; --accent-ink: #3b0d11; --mark: #e3b505; --ok: #1a5f8f;
 }
 :root[data-theme="ziva"] .btn.on { background: #1a5f8f; color: #fff; border-color: #1a5f8f; }
