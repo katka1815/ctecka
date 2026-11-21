@@ -1,6 +1,6 @@
 # Čtečka: dokumentace
 
-Stav k 19. 10. 2026 (apk verze 5). Popisuje, co čtečka je, jak je udělaná a proč, co je ověřené,
+Stav k 21. 11. 2026 (apk verze 6: čeština a noční režim). Popisuje, co čtečka je, jak je udělaná a proč, co je ověřené,
 co nefungovalo a jak se to obešlo.
 
 ## 1. Co to je
@@ -210,7 +210,7 @@ a latině.
 - Firefox (na počítači i v mobilu),
 - iPhone,
 - v apk: hlas telefonu, ukládání zálohy a exportu, tisk slovníčku, výběr jiných souborů než PDF
-  a počítání stran u nalezených PDF (přidáno ve verzi 4), překlad vedle (verze 5),
+  a počítání stran u nalezených PDF (přidáno ve verzi 4), překlad vedle (verze 5), noční režim (verze 6),
 - překlad vedle na skutečných PDF (zlomy stránek uprostřed vět a odstavců),
 - noční režim v apk a na iPhonu (`mix-blend-mode` WebView i Safari umí, ale na zařízení nezkoušeno),
 - hledání ve složce v prohlížeči (systémové okno nejde ovládat automaticky).
