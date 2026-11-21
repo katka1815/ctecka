@@ -32,9 +32,14 @@
   const OLD_FONT = { sans: 'system' };
   let look = { theme: 'auto', font: 'arial', lh: 1.65, pad: 28 };
   try { const f = localStorage.getItem('ctecka_font'); if (FONTS[f]) look.font = f; } catch (e) {}
+  // noční režim (popis níž u „noční režim“); stav musí existovat dřív, než se poprvé zavolá applyLook
+  const NIGHT_LEVELS = [1, 0.7, 0.5, 0.35, 0.25, 0.15, 0.1, 0.06, 0.03];
+  const night = { on: false, level: 0.35, red: true };
+  try { Object.assign(night, JSON.parse(localStorage.getItem('ctecka_night') || '{}'), { on: false }); } catch (e) {}
+  if (!NIGHT_LEVELS.includes(night.level)) night.level = 0.35;
   const dark = window.matchMedia('(prefers-color-scheme: dark)');
   function applyLook() {
-    document.documentElement.dataset.theme = look.theme === 'auto' ? (dark.matches ? 'dark' : 'light') : look.theme;
+    document.documentElement.dataset.theme = night.on ? 'dark' : look.theme === 'auto' ? (dark.matches ? 'dark' : 'light') : look.theme;
     const p = $('page');
     if (OLD_FONT[look.font]) look.font = OLD_FONT[look.font];
     const ff = FONTS[look.font] || FONTS.arial;
@@ -49,8 +54,40 @@
   applyLook();
   const setLook = ch => { look = { ...look, ...ch }; applyLook(); A.kvSet('look', look); drawTab(); };
 
+  // ---------- noční režim ----------
+  // Vrstva přes celou appku s mix-blend-mode: multiply. Barva rgb(jas, 0, 0) vynuluje zelenou a modrou
+  // (zůstane jen červené světlo) a červenou ztlumí – jde tak pod nejnižší jas telefonu.
+  // Zapnutí se NEukládá: po zavření a otevření appky je noční režim vypnutý, ať ráno nečteš ve tmě.
+  // Ukládá se jen nastavený jas a filtr, aby byly příště stejné.
+  const veil = el('<div id="nightVeil" hidden></div>');
+  document.body.append(veil);
+  $('fontMinus').before(el('<button id="nightBtn" class="btn" title="Noční režim: ztlumí jas a nechá jen červené světlo">🌙</button>'));
+  const themeMeta = document.querySelector('meta[name="theme-color"]'), themeColor = themeMeta.content;
+  function applyNight() {
+    const v = Math.round(255 * night.level);
+    veil.hidden = !night.on;
+    veil.style.background = night.red ? `rgb(${v},0,0)` : `rgb(${v},${v},${v})`;
+    $('nightBtn').classList.toggle('on', night.on);
+    themeMeta.content = night.on ? '#000000' : themeColor;
+    applyLook();
+  }
+  const setNight = ch => {
+    Object.assign(night, ch);
+    try { localStorage.setItem('ctecka_night', JSON.stringify({ level: night.level, red: night.red })); } catch (e) {}
+    applyNight(); drawTab();
+  };
+  $('nightBtn').onclick = () => setNight({ on: !night.on });
+  // Appka může zůstat přes noc otevřená na pozadí: když se ráno vrátíš (po půl hodině a víc, mezi 6. a 20. hodinou), noční režim se vypne.
+  let hiddenAt = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { hiddenAt = Date.now(); return; }
+    const h = new Date().getHours();
+    if (night.on && hiddenAt && Date.now() - hiddenAt > 30 * 60000 && h >= 6 && h < 20) setNight({ on: false });
+  });
+  applyNight();
+
   // ---------- výslovnost ----------
-  const VOICE = { en: 'en-US', de: 'de-DE', fr: 'fr-FR', es: 'es-ES', it: 'it-IT', la: 'it-IT', grc: 'el-GR', eu: 'eu-ES', et: 'et-EE', hsb: 'cs-CZ', dsb: 'pl-PL' };
+  const VOICE = { cs: 'cs-CZ', en: 'en-US', de: 'de-DE', fr: 'fr-FR', es: 'es-ES', it: 'it-IT', la: 'it-IT', grc: 'el-GR', eu: 'eu-ES', et: 'et-EE', hsb: 'cs-CZ', dsb: 'pl-PL' };
   function speak(text) {
     const tag = VOICE[A.lang] || 'en-US';
     text = text.slice(0, 3500);
@@ -148,6 +185,10 @@
     } else if (tab === 'look') {
       const opt = (key, val, label) => `<button class="btn small${look[key] === val ? ' on' : ''}" data-k="${key}" data-v="${val}">${label}</button>`;
       body.innerHTML = `<h4>Barvy</h4><div class="rowb">${opt('theme', 'auto', 'Podle systému')}${opt('theme', 'light', 'Světlé')}${opt('theme', 'sepia', 'Sépie')}${opt('theme', 'ziva', 'Živé')}${opt('theme', 'dark', 'Tmavé')}</div>
+        <h4>Noční režim</h4><div class="rowb"><button class="btn small${night.on ? ' on' : ''}" data-night="toggle">${night.on ? 'Vypnout' : 'Zapnout'}</button>
+          <button class="btn small${night.red ? ' on' : ''}" data-night="red">Červený filtr</button></div>
+        <div class="rowb"><button class="btn" data-nl="1">Tmavší</button><span>jas ${Math.round(night.level * 100)} %</span><button class="btn" data-nl="-1">Světlejší</button></div>
+        <p class="hint">Po zavření a novém otevření appky je noční režim zase vypnutý. Jas a filtr si appka pamatuje.</p>
         <h4>Písmo</h4><div class="rowb">${opt('font', 'arial', 'Arial')}${opt('font', 'system', 'Systémové')}${opt('font', 'serif', 'Patkové')}${opt('font', 'mono', 'Strojopis')}</div>
         <h4>Velikost písma</h4><div class="rowb"><button class="btn" data-f="-1">A−</button><button class="btn" data-f="1">A+</button></div>
         <h4>Řádkování</h4><div class="rowb"><button class="btn" data-lh="-0.1">Hustší</button><span>${look.lh.toFixed(1)}</span><button class="btn" data-lh="0.1">Řidší</button></div>
@@ -182,6 +223,11 @@
       A.putBook(b); drawTab(); keepScroll();
     } else if (t.dataset.page !== undefined) jump(+t.dataset.page, t.dataset.q ? query : null);
     else if (t.dataset.k) setLook({ [t.dataset.k]: t.dataset.v });
+    else if (t.dataset.night) setNight(t.dataset.night === 'red' ? { red: !night.red } : { on: !night.on });
+    else if (t.dataset.nl) {
+      const i = Math.max(0, Math.min(NIGHT_LEVELS.length - 1, NIGHT_LEVELS.indexOf(night.level) + +t.dataset.nl));
+      setNight({ level: NIGHT_LEVELS[i], on: true });
+    }
     else if (t.dataset.f) $(+t.dataset.f > 0 ? 'fontPlus' : 'fontMinus').click();
     else if (t.dataset.lh) setLook({ lh: Math.max(1.2, Math.min(2.4, +(look.lh + +t.dataset.lh).toFixed(1))) });
     else if (t.dataset.pad) setLook({ pad: Math.max(8, Math.min(72, look.pad + +t.dataset.pad)) });

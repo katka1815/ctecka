@@ -525,6 +525,7 @@
   const gramHtml = e => e.gram && e.gram.length ? `<div class="gram">tvar: ${e.gram.map(esc).join(' <i>nebo</i> ')}</div>` : '';
 
   function showPopup(span) {
+    if (byCode[lang].noDict) return;   // česká knížka: klepnutí na slovo nic nepřekládá
     const res = resolve(span.textContent);
     const key = wkey(res.lemma);
     const rec = wordRec(key);

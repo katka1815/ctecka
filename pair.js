@@ -288,7 +288,8 @@
   const STOP = {
     en: 'the and of to was he that it his in', de: 'der die und das nicht sich er ich ist zu',
     fr: 'le la les et des est que une il pas', es: 'el la que los de las por una con se',
-    it: 'il che di la non per una è gli del', la: 'et in est non ad cum quod ut sed qui',
+    it: 'il che di la non per una è gli del', cs: 'a se na je že to v jsem ale by',
+    la: 'et in est non ad cum quod ut sed qui',
   };
   function guessLang(b) {
     const mid = b.pages.length >> 1;

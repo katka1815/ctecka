@@ -21,6 +21,8 @@
 :root[data-theme="ziva"] #pTr .gram, :root[data-theme="ziva"] #sheetBody .item em { color: #1a5f8f; }
 :root[data-theme="ziva"] a { color: #1a5f8f; }
 :root[data-theme="light"] { --bg: #f4f4f2; --paper: #ffffff; --ink: #1f1f1f; --muted: #6d6d6d; --line: #dcdcdc; }
+/* noční režim: vrstva přes všechno, jen násobí barvy (klepnutí jdou skrz) */
+#nightVeil { position: fixed; inset: 0; z-index: 2147483647; pointer-events: none; mix-blend-mode: multiply; }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
 body { background: var(--bg); color: var(--ink); font: 16px/1.4 var(--font, Arial, Helvetica, sans-serif); }

@@ -7,6 +7,7 @@
     { code: 'fr', name: 'francouzština', primary: 'cs' },
     { code: 'es', name: 'španělština', primary: 'cs' },
     { code: 'it', name: 'italština', primary: 'cs' },
+    { code: 'cs', name: 'čeština', files: [], noDict: true },   // jen čtení, bez slovníku (překládat do češtiny není kam)
     { code: 'la', name: 'latina', primary: 'en' },
     { code: 'grc', name: 'starořečtina', primary: 'en' },
     { code: 'eu', name: 'baskičtina', primary: 'en', links: ['-'] },
@@ -61,7 +62,7 @@
       parse(window.FORMS[code] || '', d.forms, false);
       window.DICTS[code] = window.FORMS[code] = window.FTAGS[code] = null;
       data[code] = d;
-      if (code !== 'en') await load('en');
+      if (code !== 'en' && !byCode[code].noDict) await load('en');
     })();
     return loading[code];
   }
@@ -265,7 +266,8 @@
     code = byCode[code] ? code : 'en';
     const cache = caches[code] || (caches[code] = new Map());
     let r = cache.get(rawWord);
-    if (!r) cache.set(rawWord, r = code === 'en' ? resolveEn(rawWord) : resolveOther(rawWord, code));
+    if (!r) cache.set(rawWord, r = byCode[code].noDict ? { form: rawWord.toLowerCase(), lemma: rawWord.toLowerCase(), show: rawWord.toLowerCase(), cs: null, en: null, formCs: null, alt: [] }
+      : code === 'en' ? resolveEn(rawWord) : resolveOther(rawWord, code));
     return r;
   }
 

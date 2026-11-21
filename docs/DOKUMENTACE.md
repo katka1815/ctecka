@@ -55,6 +55,9 @@ háčky (`App.hooks.open`, `App.hooks.render`).
 Při nahrání se soubor jednou zpracuje na **stránky textu** a uloží do prohlížeče (IndexedDB). Čte se už jen
 z toho, původní soubor není potřeba.
 
+Čeština (od 21. 11. 2026) je jazyk knížky bez slovníku (`noDict` v `lang.js`): knížka se jen čte, klepnutí
+na slovo nic neotevře a anglický slovník se nenačítá. Funguje i jako druhá knížka u překladu vedle.
+
 - **PDF:** text se bere z pdf.js po kouscích s polohou; z nich se skládají řádky a odstavce (podle mezer
   mezi řádky a odsazení), spojují se rozdělená slova a zahazují čísla stran. Stránka čtečky = stránka PDF.
 - **EPUB, FB2, TXT:** nemají stránky, text se dělí zhruba po 1600 znacích, kapitola začíná na nové stránce.
@@ -122,6 +125,16 @@ Barvy Živé: Rich Mahogany text, Saffron hlavní tlačítka (text na nich Mahog
 tmavší teal #1a5f8f (kontrast WCAG AA), bez světle modré. Nad seznamem knížek je poznámka, že se knížky
 zpracují jen v prohlížeči, a odkaz na e-knihy Městské knihovny v Praze.
 
+### Noční režim
+Tlačítko 🌙 v liště čtení (a Nabídka → Vzhled → Noční režim). Přes celou appku se položí vrstva
+`#nightVeil` s `mix-blend-mode: multiply` v barvě `rgb(jas, 0, 0)`: zelená a modrá složka všeho na obrazovce
+(text, obrázky, původní stránka PDF) se vynásobí nulou, zůstane jen červené světlo, a červená se ztlumí
+podle jasu. Jas jde v krocích 100 až 3 % (výchozí 35 %), takže pod nejnižší jas telefonu. Pod vrstvou se
+zapne tmavý motiv a barva lišty prohlížeče se přepne na černou. Červený filtr jde vypnout (pak je to jen
+ztlumení). **Zapnutí se neukládá:** po zavření a otevření appky je noční režim vypnutý; pamatuje se jen jas
+a filtr (localStorage `ctecka_night`). Když appka zůstane přes noc na pozadí, noční režim se vypne při
+návratu po víc než 30 minutách mezi 6. a 20. hodinou.
+
 ### Androidí aplikace
 Tenký obal: jedno okno s prohlížečem (WebView), které bere stránky čtečky z balíčku aplikace pod
 smyšlenou adresou `https://ctecka.app/`. Navíc přidává, co web neumí: projití úložiště, hlas telefonu,
@@ -142,6 +155,9 @@ uložení souboru do Stažených, tisk a tlačítko Zpět.
 | Zip pro EPUB napsaný vlastní | Prohlížeč umí rozbalovat sám (`DecompressionStream`), knihovna není potřeba. |
 | Písmo Arial jako výchozí, jednotná nabídka písem ve všech appkách | Přání (2026-11-09): dobře čitelné jednoduché písmo, ve všech appkách stejný výběr. |
 | Ukázka na katerinajochova.cz/projekty/ctecka bere slovníky odsud (GitHub Pages) | Tam jsou soubory nad 25 MB. Ukázku skládá web (`tools/projekty/sestav.mjs` v repu katerinajochova) z téhle složky, po změně čtečky ji tam stačí znovu sestavit. |
+| Čeština bez slovníku | Překládat česky psanou knížku do češtiny nemá smysl; jde o to, aby šla číst (a mít noční režim). |
+| Noční režim jako násobicí vrstva, ne barevný motiv | Vrstva zaručí jen červené světlo úplně všude (i obrázky a PDF), bez úprav každé barvy zvlášť, a jde ztlumit pod jas telefonu. |
+| Noční režim se po novém otevření vypne | Přání (2026-11-21): ať ráno nepřijde do úplně tmavé appky. |
 | Vynecháno: MOBI, rozpoznávání textu ve skenech, složky v knihovně | MOBI je uzavřený formát; rozpoznávání textu potřebuje desítky MB dat na jazyk; místo složek je hledání a řazení. |
 
 ## 6. Co nefungovalo a jak se to obešlo
@@ -179,6 +195,10 @@ původní stránka, přejmenování, offline paměť, nahrání víc souborů na
 Překlad vedle (Chrome a Node, na textových souborech z Gutenbergu): párování, zvýraznění slov oběma směry,
 oprava, upozornění na špatný jazyk, mobilní rozložení, uložení po obnovení stránky.
 
+Čeština a noční režim (21. 11., Chrome): česká TXT knížka se otevře bez slovníku, klepnutí na slovo nic
+neotevře; v nočním režimu má snímek obrazovky zelenou i modrou složku nulovou (jen červená, max. 89 z 255
+při jasu 35 %); po obnovení stránky je noční režim vypnutý a jas zůstal uložený.
+
 **Ověřeno Katkou na telefonu (apk):** čtení a hledání knížek v úložišti (najde všechna PDF).
 
 **Ověřeno Katkou v prohlížeči (19. 10.):** překlad vedle s estonštinou („jakžtakž ujde“).
@@ -192,6 +212,7 @@ a latině.
 - v apk: hlas telefonu, ukládání zálohy a exportu, tisk slovníčku, výběr jiných souborů než PDF
   a počítání stran u nalezených PDF (přidáno ve verzi 4), překlad vedle (verze 5),
 - překlad vedle na skutečných PDF (zlomy stránek uprostřed vět a odstavců),
+- noční režim v apk a na iPhonu (`mix-blend-mode` WebView i Safari umí, ale na zařízení nezkoušeno),
 - hledání ve složce v prohlížeči (systémové okno nejde ovládat automaticky).
 
 ## 8. Známá omezení
