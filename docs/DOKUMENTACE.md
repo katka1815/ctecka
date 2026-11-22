@@ -1,6 +1,6 @@
 # Čtečka: dokumentace
 
-Stav k 21. 11. 2026 (apk verze 6: čeština a noční režim). Popisuje, co čtečka je, jak je udělaná a proč, co je ověřené,
+Stav k 22. 11. 2026 (apk verze 6: čeština a noční režim, Katka potvrdila, že fungují). Popisuje, co čtečka je, jak je udělaná a proč, co je ověřené,
 co nefungovalo a jak se to obešlo.
 
 ## 1. Co to je
@@ -203,6 +203,8 @@ při jasu 35 %); po obnovení stránky je noční režim vypnutý a jas zůstal 
 
 **Ověřeno Katkou v prohlížeči (19. 10.):** překlad vedle s estonštinou („jakžtakž ujde“).
 
+**Ověřeno Katkou (22. 11.):** čeština a noční režim po vydání verze 6 fungují („funguje“; na kterém zařízení, neuvedla).
+
 **Ověřeno jen výpisem ze slovníku, ne v prohlížeči:** tvary slov v němčině, španělštině, italštině
 a latině.
 
@@ -212,7 +214,7 @@ a latině.
 - v apk: hlas telefonu, ukládání zálohy a exportu, tisk slovníčku, výběr jiných souborů než PDF
   a počítání stran u nalezených PDF (přidáno ve verzi 4), překlad vedle (verze 5), noční režim (verze 6),
 - překlad vedle na skutečných PDF (zlomy stránek uprostřed vět a odstavců),
-- noční režim v apk a na iPhonu (`mix-blend-mode` WebView i Safari umí, ale na zařízení nezkoušeno),
+- noční režim na iPhonu a reset po návratu z pozadí (30 min, 6–20 h) na skutečném telefonu,
 - hledání ve složce v prohlížeči (systémové okno nejde ovládat automaticky).
 
 ## 8. Známá omezení
